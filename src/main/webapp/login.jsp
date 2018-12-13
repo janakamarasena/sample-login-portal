@@ -19,29 +19,18 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import="org.apache.log4j.Logger" %>
-
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    
-    <title>Login Portal</title>
-</head>
-
-<body style="font-family: 'Roboto', sans-serif;">
-<div>&nbsp;</div>
-
+<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 
 <%
     Logger log = Logger.getLogger("org.sample.login.portal.login");
-    String queryString = request.getQueryString();
-    String errorMessage = "Authentication Failed! Please Retry";
-    String loginFailed = "false";
     final String AUTH_FAILURE_PARAM = "authFailure";
     final String AUTH_FAILURE_MSG_PARAM = "authFailureMsg";
     final String SESSION_DATA_KEY_PARAM = "sessionDataKey";
+    String queryString = request.getQueryString();
+    String errorMessage = "Authentication Failed! Please Retry";
+    String loginFailed = "false";
     String formActionURL = "authenticate.do";
-    
     
     try {
         ResourceBundle resource = ResourceBundle.getBundle("loginportal");
@@ -50,7 +39,6 @@
         log.error("Error while retrieving properties from loginportal.properties file.",e);
         log.info("Using default property values.");
     }
-    
     
     if (request.getParameter(AUTH_FAILURE_PARAM) != null &&
             "true".equals(request.getParameter(AUTH_FAILURE_PARAM))) {
@@ -65,10 +53,20 @@
         }
     }
     
-    if (queryString != null && queryString.length() != 0) {
+    if (StringUtils.isNotBlank(queryString)) {
         formActionURL = formActionURL + "?" + queryString;
     }
 %>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    
+    <title>Login Portal</title>
+</head>
+
+<body style="font-family: 'Roboto', sans-serif;">
 
 <div style=" position: absolute;top: 40%; left: 50%; transform: translate(-50%, -50%);">
     <div>
@@ -97,7 +95,7 @@
                     <div>
                         <input type="password" id='password' name="password" size='40'/>
                         <input type="hidden" name="sessionDataKey"
-                               value='<%=request.getParameter(SESSION_DATA_KEY_PARAM)%>'/>
+                               value='<%=Encode.forHtmlAttribute(request.getParameter(SESSION_DATA_KEY_PARAM))%>'/>
                     </div>
                 </div>
                 <div style="float: right">
