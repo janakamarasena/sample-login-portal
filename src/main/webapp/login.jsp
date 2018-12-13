@@ -34,7 +34,7 @@
     
     try {
         ResourceBundle resource = ResourceBundle.getBundle("loginportal");
-        formActionURL = resource.getString("authentication.do.url");
+        formActionURL = resource.getString("authentication.do.ep");
     } catch (Exception e) {
         log.error("Error while retrieving properties from loginportal.properties file.",e);
         log.info("Using default property values.");

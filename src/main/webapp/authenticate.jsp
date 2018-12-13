@@ -32,22 +32,24 @@
 <%
     Logger log = Logger.getLogger("org.sample.login.portal.login");
     final String RESPONSE_PARAM_TOKEN = "token";
-    String authAPIURL = "https://localhost:9443/api/identity/auth/v1.0/authenticate";
-    String commonauthURL = "https://localhost:9443/commonauth";
+    String identityServerURL = "https://localhost:9443";
+    String authAPIEp = "/api/identity/auth/v1.0/authenticate";
+    String commonauthEp = "/commonauth";
     CloseableHttpClient httpClient = HttpClients.createDefault();
     String sessionDataKey = request.getParameter("sessionDataKey");
     String token = "";
     
     try {
         ResourceBundle resource = ResourceBundle.getBundle("loginportal");
-        authAPIURL = resource.getString("auth.api.url");
-        commonauthURL = resource.getString("common.auth.url");
+        identityServerURL = resource.getString("identity.server.url");
+        authAPIEp = resource.getString("auth.api.ep");
+        commonauthEp = resource.getString("common.auth.ep");
     } catch (Exception e) {
         log.error("Error while retrieving properties from loginportal.properties", e);
         log.info("Using default property values");
     }
     
-    HttpPost httpPostRequest = new HttpPost(authAPIURL);
+    HttpPost httpPostRequest = new HttpPost(identityServerURL + authAPIEp);
     String auth = request.getParameter("username") + ":" + request.getParameter("password");
     System.out.println(auth);
     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
@@ -65,14 +67,20 @@
     } catch (Exception e) {
         log.error("Error while processing auth request.", e);
     }
+    
+    String redirectURL = identityServerURL + commonauthEp;
 %>
 
 
 <html>
-<body>
-<p>You are now redirected to <%=commonauthURL%> If the redirection fails, please click the post button.</p>
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <title>Login Portal</title>
+</head>
+<body style="font-family: 'Roboto', sans-serif;">
+<p>You are now redirected to <%=redirectURL%> If the redirection fails, please click the post button.</p>
 
-<form method='post' action='<%=commonauthURL%>'>
+<form method='post' action='<%=redirectURL%>'>
     <p>
         <input id="token" name="token" type="hidden" value="<%=Encode.forHtmlAttribute(token)%>">
         <input id="sessionDataKey" name="sessionDataKey" type="hidden"
