@@ -51,7 +51,6 @@
     
     HttpPost httpPostRequest = new HttpPost(identityServerURL + authAPIEp);
     String auth = request.getParameter("username") + ":" + request.getParameter("password");
-    System.out.println(auth);
     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
     httpPostRequest.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + new String(encodedAuth));
     httpPostRequest.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
