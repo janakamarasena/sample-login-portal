@@ -19,7 +19,6 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
          version="4.0">
 
-
     <servlet>
         <servlet-name>login.do</servlet-name>
         <jsp-file>/login.jsp</jsp-file>
@@ -45,13 +44,9 @@
         <url-pattern>/retry.do</url-pattern>
     </servlet-mapping>
 
-
     <servlet-mapping>
         <servlet-name>authenticate.do</servlet-name>
         <url-pattern>/authenticate.do</url-pattern>
     </servlet-mapping>
-
-
-
 
 </web-app>

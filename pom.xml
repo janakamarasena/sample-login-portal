@@ -21,7 +21,7 @@
     <artifactId>org.sample.login.portal</artifactId>
     <packaging>war</packaging>
     <name>Login Portal</name>
-    <description>Identity Application Authentication Endpoint</description>
+    <description>Sample login portal</description>
     <version>1.0.0</version>
 
     <dependencies>
