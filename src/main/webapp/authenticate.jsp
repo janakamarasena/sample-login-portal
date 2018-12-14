@@ -28,16 +28,26 @@
 <%@ page import="org.apache.http.util.EntityUtils" %>
 <%@ page import="org.apache.log4j.Logger" %>
 <%@ page import="java.util.ResourceBundle" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="java.util.StringTokenizer" %>
+<%@ page import="java.util.Iterator" %>
 
 <%
-    Logger log = Logger.getLogger("org.sample.login.portal.login");
+    Logger log = Logger.getLogger("org.sample.login.portal.authenticate");
     final String RESPONSE_PARAM_TOKEN = "token";
+    final String RESPONSE_PARAM_PROPERTIES = "properties";
+    final String RESPONSE_PARAM_CODE = "code";
+    final String RESPONSE_PARAM_DESCRIPTION = "description";
+    String loginDoEp = "login.do";
     String identityServerURL = "https://localhost:9443";
     String authAPIEp = "/api/identity/auth/v1.0/authenticate";
     String commonauthEp = "/commonauth";
     CloseableHttpClient httpClient = HttpClients.createDefault();
     String sessionDataKey = request.getParameter("sessionDataKey");
-    String token = "";
+    String token;
+    String redirectURL;
     
     try {
         ResourceBundle resource = ResourceBundle.getBundle("loginportal");
@@ -54,20 +64,72 @@
     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
     httpPostRequest.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + new String(encodedAuth));
     httpPostRequest.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-    
+    JSONObject json = null;
     try (CloseableHttpResponse res = httpClient.execute(httpPostRequest)) {
         
-        int statusCode = res.getStatusLine().getStatusCode();
-        if (statusCode == 200) {
-            JSONObject json = new JSONObject(EntityUtils.toString(res.getEntity()));
-            token = json.getString(RESPONSE_PARAM_TOKEN);
-        }
+        json = new JSONObject(EntityUtils.toString(res.getEntity()));
         EntityUtils.consume(res.getEntity());
     } catch (Exception e) {
         log.error("Error while processing auth request.", e);
     }
-    
-    String redirectURL = identityServerURL + commonauthEp;
+    if (json != null && json.has(RESPONSE_PARAM_TOKEN)) {
+        token = json.getString(RESPONSE_PARAM_TOKEN);
+        redirectURL = identityServerURL + commonauthEp;
+    } else {
+        
+        // Populate a key value map from the query string received.
+        Map<String, String> queryParamMap = new HashMap<String, String>();
+        String queryString = request.getQueryString();
+        if (StringUtils.isNotBlank(queryString)) {
+            StringTokenizer stringTokenizer = new StringTokenizer(queryString, "&");
+            while (stringTokenizer.hasMoreTokens()) {
+                String queryParam = stringTokenizer.nextToken();
+                String[] queryParamKeyValueArray = queryParam.split("=", 2);
+                queryParamMap.put(queryParamKeyValueArray[0], queryParamKeyValueArray[1]);
+            }
+        }
+        
+        // Update the query parameter map with the parameters received in error response.
+        StringBuilder queryStringBuilder = new StringBuilder();
+        
+        if (json != null) {
+            if (json.has(RESPONSE_PARAM_PROPERTIES)) {
+                JSONObject propertyObj = json.getJSONObject(RESPONSE_PARAM_PROPERTIES);
+                if (propertyObj != null) {
+                    Iterator<String> keys = propertyObj.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        queryParamMap.put(Encode.forUriComponent(key),
+                                Encode.forUriComponent(String.valueOf(propertyObj.get(key))));
+                    }
+                }
+            }
+            
+            queryParamMap.put("errorCode", Encode.forUriComponent(json.getString(RESPONSE_PARAM_CODE)));
+            queryParamMap.put("errorMsg", Encode.forUriComponent(json.getString(RESPONSE_PARAM_DESCRIPTION)));
+        }
+        // Re-build query string
+        int count = 0;
+        for (Map.Entry<String, String> entry : queryParamMap.entrySet()) {
+            queryStringBuilder.append(entry.getKey()).append("=").append(entry.getValue());
+            count++;
+            if (count < queryParamMap.size()) {
+                queryStringBuilder.append("&");
+            }
+        }
+        
+        String newQueryString = queryStringBuilder.toString();
+        
+        redirectURL = loginDoEp;
+        
+        if (StringUtils.isNotBlank(newQueryString)) {
+            redirectURL = redirectURL + "?" + newQueryString;
+        }
+        response.sendRedirect(redirectURL);
+        return;
+    }
+
+
 %>
 
 

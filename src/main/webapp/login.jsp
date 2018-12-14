@@ -17,7 +17,7 @@
   --%>
 <!DOCTYPE html>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import = "java.util.ResourceBundle" %>
+<%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.apache.log4j.Logger" %>
 <%@ page import="org.apache.commons.lang.StringUtils" %>
 <%@ page import="org.owasp.encoder.Encode" %>
@@ -26,6 +26,8 @@
     Logger log = Logger.getLogger("org.sample.login.portal.login");
     final String AUTH_FAILURE_PARAM = "authFailure";
     final String AUTH_FAILURE_MSG_PARAM = "authFailureMsg";
+    final String ERROR_CODE_PARAM = "errorCode";
+    final String ERROR_MSG_PARAM = "errorMsg";
     final String SESSION_DATA_KEY_PARAM = "sessionDataKey";
     String queryString = request.getQueryString();
     String errorMessage = "Authentication Failed! Please Retry";
@@ -36,20 +38,29 @@
         ResourceBundle resource = ResourceBundle.getBundle("loginportal");
         formActionURL = resource.getString("authentication.do.ep");
     } catch (Exception e) {
-        log.error("Error while retrieving properties from loginportal.properties file.",e);
+        log.error("Error while retrieving properties from loginportal.properties file.", e);
         log.info("Using default property values.");
     }
     
-    if (request.getParameter(AUTH_FAILURE_PARAM) != null &&
+    if (StringUtils.isNotEmpty(request.getParameter(AUTH_FAILURE_PARAM)) &&
             "true".equals(request.getParameter(AUTH_FAILURE_PARAM))) {
         loginFailed = "true";
-        
         if (request.getParameter(AUTH_FAILURE_MSG_PARAM) != null) {
             errorMessage = request.getParameter(AUTH_FAILURE_MSG_PARAM);
             
             if (errorMessage.equalsIgnoreCase("login.fail.message")) {
                 errorMessage = "Authentication Failed! Please Retry.";
             }
+        }
+    } else {
+        if (StringUtils.isNotEmpty(request.getParameter(ERROR_MSG_PARAM))) {
+            loginFailed = "true";
+            errorMessage = request.getParameter(ERROR_MSG_PARAM);
+        }
+        
+        if (StringUtils.isNotEmpty(request.getParameter(ERROR_CODE_PARAM))) {
+            loginFailed = "true";
+            errorMessage = request.getParameter(ERROR_CODE_PARAM) + " : " + errorMessage;
         }
     }
     
@@ -98,7 +109,7 @@
                                value='<%=Encode.forHtmlAttribute(request.getParameter(SESSION_DATA_KEY_PARAM))%>'/>
                     </div>
                 </div>
-                <div style="float: right">
+                <div>
                     <input type="submit" value='LOGIN'>
                 </div>
             </div>
